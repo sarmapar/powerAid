@@ -234,7 +234,7 @@ server <- function(input, output, session) {
       }
       hpowPercByDistData$power <- power
       hpowPercByDistData
-    })
+    }, ignoreNULL = F)
 
     output$distancePlots <- renderPlotly({
 
@@ -259,7 +259,7 @@ server <- function(input, output, session) {
                       nbinsx = 100) %>%
         layout(barmode="overlay",
                xaxis = list(title = "distance (bases)"),
-               yaxis = list(title = "number of loops"),
+               yaxis = list(title = "# of loops"),
                title = "Well-powered loops by distance")
 
       #### Making second plot
@@ -281,10 +281,12 @@ server <- function(input, output, session) {
       pred <- predict(gam, type="response", se.fit=TRUE)
 
       fig <- plot_ly(hpowPowPercByDist, x = ~distance, y = ~(eval(sym(input$powerThreshDist))),
-              type = 'scatter', mode = 'lines', name = "raw data", line = list(color = "lightgray")) %>%
-              add_trace(y = predict(gam), type = 'scatter', mode = 'lines', name = "GAM fit smooth", line = list(color = "#288BA8"))
+                     type = 'scatter', mode = 'lines', name = "raw data", line = list(color = "lightgray")) %>%
+        add_trace(y = predict(gam), type = 'scatter', mode = 'lines', name = "smooth fit", line = list(color = "#288BA8")) %>%
+        layout(yaxis = list(title = '% of well-powered\nloops',  range = list(0, 100)))
 
-      distancePlots <- subplot(fig, hist, nrows = 2, shareX = TRUE, margin = 0.075)
+
+      distancePlots <- subplot(fig, hist, nrows = 2, shareX = TRUE, titleY = TRUE, margin = 0.075) %>% layout(hovermode = "x unified")
       distancePlots
 
       })
