@@ -9,6 +9,7 @@
 
 library(shiny)
 library(shinyWidgets)
+library(shinycssloaders)
 library(plotly)
 library(dplyr)
 library(tidyr)
@@ -107,7 +108,7 @@ ui <- fluidPage(
         sidebarLayout(
           sidebarPanel(
             shinyWidgets::pickerInput(inputId = "sd",
-                                      label = "Sequencing Depth per Replicate (billions)",
+                                      label = "Sequencing Depth per Replicate (Contacts, in billions)",
                                       choices = as.numeric(unique(hpowLines$seqDepth))/1000,
                                       multiple = F,
                                       inline = T,
@@ -142,8 +143,8 @@ ui <- fluidPage(
             actionButton("gobutton","Go")),
 
         mainPanel(
-          plotlyOutput("distancePlots"),
-          htmlOutput("percentageSummary"))))
+          plotlyOutput("distancePlots") %>% withSpinner(type = 1, color = "#1c8ccf"),
+          htmlOutput("percentageSummary") %>% withSpinner(type = 0))))
     )
 )
 
@@ -286,7 +287,9 @@ server <- function(input, output, session) {
         layout(yaxis = list(title = '% of well-powered\nloops',  range = list(0, 100)))
 
 
-      distancePlots <- subplot(fig, hist, nrows = 2, shareX = TRUE, titleY = TRUE, margin = 0.075) %>% layout(hovermode = "x unified")
+      distancePlots <- subplot(fig, hist, nrows = 2, shareX = TRUE, titleY = TRUE, margin = 0.075) %>%
+        layout(hovermode = "x unified")
+
       distancePlots
 
       })
