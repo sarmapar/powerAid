@@ -1,12 +1,20 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+# Install required packages
+required_packages <- c("shiny", "shinyWidgets", "shinycssloaders",
+                       "plotly", "dplyr", "tidyr")
 
+new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
+if(length(new_packages))
+  install.packages(new.packages, dependencies = T)
+
+if (!require("RNASeqPower", quietly = TRUE)){
+  if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+  BiocManager::install("RNASeqPower")
+}
+
+
+# Load required packages
 library(shiny)
 library(shinyWidgets)
 library(shinycssloaders)
@@ -22,8 +30,6 @@ repMin <- 2
 repMax <- 10
 fcMin <- 1.1
 fcMax <- 10
-
-print(getwd())
 
 # load data
 load("../data/appPowerPerc.rda")
@@ -148,11 +154,12 @@ ui <- fluidPage(
     )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output, session) {
 
   global <- reactiveValues(percAboveThreshTot = NULL)
 
+  #### Tab 1: Dispersion and power
     output$dispPlotly <- renderPlotly({
 
       #filter for replicates and total seq depth
@@ -161,7 +168,7 @@ server <- function(input, output, session) {
                replicates <= input$repRange[2],
                dispersion %in% input$disp)
 
-    #plotly plot
+     #plotly plot for dispersions
       fig <- plot_ly(group_by(hpowLinesFiltered, replicates),
                      type = 'scatter', mode = "lines",
                      x = ~total/1000, y =~(eval(sym(input$powerThresh))),
@@ -181,32 +188,6 @@ server <- function(input, output, session) {
     })
 
     #### Tab 2: Distance-dependence
-
-    observeEvent(input$disp2, {
-      if(!is.na(input$disp2) & input$disp2 > dispMax) {
-        updateNumericInput(session, "disp2", value = dispMax)
-      } else if (!is.na(input$disp2) & input$disp2 < dispMin) {
-        updateNumericInput(session, "disp2", value = dispMin)
-      }
-    })
-
-    observeEvent(input$reps, {
-      if(!is.na(input$reps) & input$reps > repMax) {
-        updateNumericInput(session, "reps", value = repMax)
-      } else if (!is.na(input$reps) & input$reps < repMin) {
-        updateNumericInput(session, "reps", value = repMin)
-      }
-    })
-
-    observeEvent(input$fc, {
-      if(!is.na(input$fc) & input$fc > fcMax) {
-        updateNumericInput(session, "fc", value = fcMax)
-      } else if (!is.na(input$fc) & input$fc < fcMin) {
-        updateNumericInput(session, "fc", value = fcMin)
-      }
-    })
-
-
     ## prepare data table for current condition
     hpowPercByDistData <- eventReactive(input$gobutton,{
 
