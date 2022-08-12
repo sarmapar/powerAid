@@ -8,9 +8,9 @@ if(length(new_packages))
 
 if (!require("RNASeqPower", quietly = TRUE)){
   if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+    install.packages("BiocManager", dependencies = T)
 
-  BiocManager::install("RNASeqPower")
+  BiocManager::install("RNASeqPower", dependencies = T)
 }
 
 
