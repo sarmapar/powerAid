@@ -4,7 +4,7 @@ required_packages <- c("shiny", "shinyWidgets", "shinycssloaders",
 
 new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages))
-  install.packages(new.packages, dependencies = T)
+  install.packages(new_packages, dependencies = T)
 
 if (!require("RNASeqPower", quietly = TRUE)){
   if (!require("BiocManager", quietly = TRUE))
