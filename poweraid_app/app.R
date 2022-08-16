@@ -81,7 +81,7 @@ hpowAll <- hpowAll %>%
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Power to Call Differential Loops"),
+    titlePanel("Hi-C Poweraid: Determining the Power to Call Differential Loops"),
 
 
     # Sidebars for Tab panels
