@@ -1,6 +1,6 @@
 # Install required packages
 required_packages <- c("shiny", "shinyWidgets", "shinycssloaders",
-                       "plotly", "dplyr", "tidyr")
+                       "plotly", "dplyr", "tidyr", "mgcv")
 
 new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages))
@@ -157,7 +157,8 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output, session) {
 
-  global <- reactiveValues(percAboveThreshTot = NULL)
+  global <- reactiveValues(percAboveThreshTot = NULL,
+                           powerThreshDist = NULL)
 
   #### Tab 1: Dispersion and power
     output$dispPlotly <- renderPlotly({
@@ -189,9 +190,7 @@ server <- function(input, output, session) {
 
     #### Tab 2: Distance-dependence
     ## prepare data table for current condition
-    hpowPercByDistData <- eventReactive(input$gobutton,{
-
-      global$percAboveThreshTot <- NA
+    reactiveData <- eventReactive(input$gobutton,{
 
       ##Calculate power
       hpowPercByDistData <- hpowAll %>%
@@ -214,39 +213,20 @@ server <- function(input, output, session) {
                                  n = as.numeric(input$reps))
         }
       }
+
       hpowPercByDistData$power <- power
-      hpowPercByDistData
-    }, ignoreNULL = F)
 
-    output$distancePlots <- renderPlotly({
-
-      #### Making first plot
-
+      # calculate percent of well-powered loops
       if(input$powerThreshDist == "percAbove80"){
-        powerThreshDist <- filter(hpowPercByDistData(),power >= 0.8)
-        global$percAboveThreshTot <- round((sum(hpowPercByDistData()$power >= 0.8)/nrow(hpowPercByDistData()))*100,2)
+        global$powerThreshDist <- filter(hpowPercByDistData,power >= 0.8)
+        global$percAboveThreshTot <- round((sum(hpowPercByDistData$power >= 0.8)/nrow(hpowPercByDistData))*100,2)
       } else {
-        powerThreshDist <- filter(hpowPercByDistData(),power >= 0.9)
-        global$percAboveThreshTot <- round((sum(hpowPercByDistData()$power >= 0.9)/nrow(hpowPercByDistData()))*100,2)
+        global$powerThreshDist <- filter(hpowPercByDistData,power >= 0.9)
+        global$percAboveThreshTot <- round((sum(hpowPercByDistData$power >= 0.9)/nrow(hpowPercByDistData))*100,2)
       }
 
-      hist <- plot_ly() %>%
-        add_histogram(x = ~hpowPercByDistData()$distance,
-                      name = "All Loops",
-                      marker = list(color = "lightgrey"),
-                      nbinsx = 100) %>%
-        add_histogram(x = ~powerThreshDist$distance,
-                      name = "Well-powered\nLoops",
-                      marker = list(color = "forestgreen"),
-                      nbinsx = 100) %>%
-        layout(barmode="overlay",
-               xaxis = list(title = "distance (bases)"),
-               yaxis = list(title = "# of loops"),
-               title = "Well-powered loops by distance")
-
-      #### Making second plot
-
-      hpowPowPercByDist <- hpowPercByDistData() %>%
+      # generate best fit gam model
+      hpowPowPercByDist <- hpowPercByDistData %>%
         dplyr::group_by(distance) %>%
         dplyr::summarize(percAbove80 = (sum(power >= 0.8)/dplyr::n())*100,
                          percAbove90 = (sum(power >= 0.9)/dplyr::n())*100,
@@ -260,11 +240,38 @@ server <- function(input, output, session) {
       else{
         gam <- mgcv::gam(percAbove90 ~ s(distance), data = hpowPowPercByDist)
       }
-      pred <- predict(gam, type="response", se.fit=TRUE)
 
-      fig <- plot_ly(hpowPowPercByDist, x = ~distance, y = ~(eval(sym(input$powerThreshDist))),
+      #return data
+      reactiveData <- list(hpowPercByDistData = hpowPercByDistData,
+                           hpowPowPercByDist = hpowPowPercByDist,
+                           gam = gam,
+                           powerThreshDist = input$powerThreshDist)
+
+    }, ignoreNULL = F)
+
+    output$distancePlots <- renderPlotly({
+
+      #### Making first plot
+
+      hist <- plot_ly() %>%
+        add_histogram(x = ~reactiveData()$hpowPercByDistData$distance,
+                      name = "All Loops",
+                      marker = list(color = "lightgrey"),
+                      nbinsx = 100) %>%
+        add_histogram(x = ~global$powerThreshDist$distance,
+                      name = "Well-powered\nLoops",
+                      marker = list(color = "forestgreen"),
+                      nbinsx = 100) %>%
+        layout(barmode="overlay",
+               xaxis = list(title = "distance (bases)"),
+               yaxis = list(title = "# of loops"),
+               title = "Well-powered loops by distance")
+
+      #### Making second plot
+
+      fig <- plot_ly(reactiveData()$hpowPowPercByDist, x = ~distance, y = ~(eval(sym(reactiveData()$powerThreshDist))),
                      type = 'scatter', mode = 'lines', name = "raw data", line = list(color = "lightgray")) %>%
-        add_trace(y = predict(gam), type = 'scatter', mode = 'lines', name = "smooth fit", line = list(color = "#288BA8")) %>%
+        add_trace(y = predict(reactiveData()$gam), type = 'scatter', mode = 'lines', name = "smooth fit", line = list(color = "#288BA8")) %>%
         layout(yaxis = list(title = '% of well-powered\nloops',  range = list(0, 100)))
 
 
