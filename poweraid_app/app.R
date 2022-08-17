@@ -1,5 +1,5 @@
 # Install required packages
-required_packages <- c("shiny", "shinyWidgets", "shinycssloaders",
+required_packages <- c("shinyWidgets", "shinycssloaders",
                        "plotly", "dplyr", "tidyr", "mgcv")
 
 new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
