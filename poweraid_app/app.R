@@ -180,6 +180,7 @@ server <- function(input, output, session) {
                                            '<br><i>Total seq depth</i>: %{x} billion contacts',
                                            '<br><b>% Well-powered Loops: </b>%{y:.2f}%',
                                            '<extra></extra>')) %>%
+        layout(legend=list(title=list(text='Dispersion'))) %>%
         group_by(replicates) %>%
         layout(xaxis = list(title = 'Total Sequencing Depth per Condition (Contacts, in billions)'),
                yaxis = list(title = 'Percent of Well-powered Loops'))
