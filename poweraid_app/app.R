@@ -122,19 +122,21 @@ ui <- fluidPage(
                                       inline = T,
                                       selected = 1),
 
+            sliderInput(inputId = "reps",
+                        label = "Replicates per Condition",
+                        value = 2,
+                        min = repMin,
+                        max = repMax,
+                        step = 1),
+
+            htmlOutput("totalSD"),
+
             sliderInput(inputId = "disp2",
                           label = "Dispersion",
                           value = 0.001,
                           min = dispMin,
                           max = dispMax,
                           step = 0.001),
-
-            sliderInput(inputId = "reps",
-                          label = "Replicates per Condition",
-                          value = 2,
-                          min = repMin,
-                          max = repMax,
-                          step = 1),
 
             sliderInput(inputId = "fc",
                          label = "Fold Change",
@@ -192,6 +194,12 @@ server <- function(input, output, session) {
     })
 
     #### Tab 2: Distance-dependence
+
+    ## Total sequencing depth for slider inputs
+    output$totalSD <- renderText({paste0("<b>Total sequencing depth: </b>", as.numeric(input$sd)*as.numeric(input$reps),
+                                         " billion contacts per condition<br><br>")})
+
+
     ## prepare data table for current condition
     reactiveData <- eventReactive(input$gobutton,{
 
