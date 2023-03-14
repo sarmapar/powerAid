@@ -12,7 +12,7 @@ This tab is useful for determining the ideal total sequencing depth and number o
 This tab provides more granular information on one set of parameters at a time. Here, you can make fine-tuned selections for fold change, dispersion, replicate number, and sequencing depth per replicate. The plots provided can then be used to determine power as a function of loop size. The top plot summarizes these into percentages per 10Kb binned distance, and the bottom plot shows the relative number of total and well-powered loops at each 10Kb binned distance. Here, a well-powered loop is defined as one with a power at or above the selected power threshold to detect the selected fold change in looping interactions. A summary of the results and chosen parameters is also displayed under the plots.
 
 
-<h3> Running Hi-C Poweraid Locally </h3>
+<h4> Running Hi-C Poweraid Locally </h4>
 To run the app in your own R session, run the line
 
 `runGitHub('poweraid', 'sarmapar', subdir = "poweraid_app")`
